@@ -1,7 +1,7 @@
 # Simulation studies for {skewsamp}
 
 This repository contains the code for simulation studies done to verify
-the correct implementation of the R package {skewsamp} (https://github.com/jobrachem/skewsamp). 
+the correct implementation of the R package [{skewsamp}](https://github.com/jobrachem/skewsamp). 
 
 Due to size limitations, the data are not contained in this repository.
 Instead, you can find them on the Open Science Framework, alongside the
