@@ -1,0 +1,55 @@
+library(tidyverse)
+source("sim/interval.R")
+
+d <- read_csv("sim/cundill_study.csv") |> select(-X1)
+
+
+
+
+ci_gamma_glm <- d$pwr_gamma_glm |> 
+  interval(n = 10000) |> 
+  as_tibble() |> 
+  add_column(efficacy = d$efficacy) |> 
+  add_column(condition = "pwr_gamma_glm")
+
+ci_t_glm <- d$pwr_t_glm |> 
+  interval(n = 10000) |> 
+  as_tibble() |> 
+  add_column(efficacy = d$efficacy) |> 
+  add_column(condition = "pwr_t_glm")
+
+ci_t_t <- d$pwr_t_t |> 
+  interval(n = 10000) |> 
+  as_tibble() |> 
+  add_column(efficacy = d$efficacy) |> 
+  add_column(condition = "pwr_t_t")
+
+ci <- bind_rows(ci_gamma_glm, ci_t_glm, ci_t_t)
+
+
+ef <- seq(from = 0.3, to = 0.7, length.out = 20)
+n <- vector(mode = "numeric", length = 20)
+for (i in seq_along(n)) {
+  ssp <- skewsamp::n_gamma(mean0 = 8.46, efficacy = ef[i], shape0 = 0.639,
+                           alpha = 0.05, power = 0.9)
+  n[i] <- ceiling(ssp)
+}
+
+d$n_skewsamp <- n
+
+(p <- d |> 
+  pivot_longer(starts_with("pwr"), names_to="condition", values_to="pwr") |> 
+  left_join(ci, by = c("efficacy", "condition")) |> 
+  filter(condition != "pwr_t_t") |> 
+  
+  ggplot(aes(x = efficacy, y = pwr, color = condition)) +
+  geom_hline(yintercept = 0.9, color = "grey", linetype = "dashed") +
+  geom_linerange(aes(ymin = lower, ymax = upper)) +
+  geom_point() +
+  geom_text(aes(label = ifelse(condition == "pwr_gamma_glm", n_skewsamp, "")), 
+            color = "black", angle = 90, nudge_y = -0.02) +
+  ylim(c(0.8, 1)) + 
+  theme_classic() +
+  theme(legend.position = "bottom"))
+
+saveRDS(p, "sim/plot_gamma.RDS")

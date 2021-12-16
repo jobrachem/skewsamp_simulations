@@ -1,0 +1,6 @@
+source("R/simulation.R")
+
+set.seed(20210702)
+d <- run_study(nsim = 10000, mean0 = 8.46, shape = 0.639)
+
+write.csv(d, "data/glm.gamma.cundill.csv")

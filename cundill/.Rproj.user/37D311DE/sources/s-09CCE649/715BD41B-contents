@@ -1,0 +1,106 @@
+sim_data <- function(n, mean0, shape, efficacy, q = 0.5) {
+  n0 <- ceiling(n * q)
+  n1 <- ceiling(n * (1 - q))
+  
+  mean1 <- mean0 * (1 - efficacy)
+  
+  y1 <- rgamma(n0, shape, scale = mean0 / shape)
+  y2 <- rgamma(n1, shape, scale = mean1 / shape)
+  
+  y <- c(y1, y2)
+  x <- c(rep(0, n0), rep(1, n1))
+  
+  data.frame(y = y, x = x)  
+}
+
+
+cohens_d <- function(mean0, shape, efficacy) {
+  var0 <- mean0^2 / shape
+  s0 <- sqrt(var0)
+  
+  mean1 <- mean0 / (1 - efficacy)
+  var1 <- mean1^2 / shape
+  s1 <- sqrt(var1)
+  
+  s <- sqrt((var0 + var1) / 2)
+  delta <- mean1 - mean0
+  d <- delta / s
+  
+  d
+}
+
+analyse_glm <- function(d, alpha) {
+  m <- glm(y ~ x, data = d, family = Gamma(link = "log"))
+  m.sum <- summary(m)
+  p <- m.sum$coefficients[2,4]
+  sig <- p <= alpha
+  
+  sig
+}
+
+
+run_sim_glm <- function(nsim, mean0, shape, efficacy, alpha = 0.05, power = 0.9, q = 0.5) {
+  n <- skewsamp::n_gamma(mean0, efficacy, shape0 = shape, alpha = alpha, power = power, q = q)
+  n <- ceiling(n$n)
+  
+  res <- vector(mode="logical", length = nsim)
+  for (i in seq(nsim)) {
+    d <- sim_data(n, mean0, shape, efficacy, q)
+    res[i] <- analyse_glm(d, alpha)
+  }
+  
+  sum(res) / nsim
+}
+
+
+analyse_t.test <- function(d, alpha) {
+  test <- t.test(y ~ x, data = d)
+  sig <- test$p.value <= alpha
+  
+  sig
+}
+
+n_t.test <- function(mean0, shape, efficacy, alpha, power) {
+  d <- cohens_d(mean0, shape, efficacy)
+  p <- pwr::pwr.t.test(d = d, sig.level = alpha, power = power)
+  
+  p$n * 2
+}
+
+run_sim_t.test <- function(nsim, mean0, shape, efficacy, alpha = 0.05, power = 0.9, q = 0.5, fun = analyse_t.test) {
+  n <- n_t.test(mean0, shape, efficacy, alpha, power)
+  n <- ceiling(n)
+  
+  res <- vector(mode="logical", length = nsim)
+  for (i in seq(nsim)) {
+    d <- sim_data(n, mean0, shape, efficacy, q)
+    res[i] <- fun(d, alpha)
+  }
+  
+  sum(res) / nsim
+}
+
+run_study <- function(nsim, mean0, shape, alpha = 0.05, power = 0.9, q = 0.5) {
+  efficacy <- seq(from = 0.3, to = 0.7, length.out = 20)
+  
+  results <- matrix(nrow = length(efficacy), ncol = 3)
+  
+  for (i in seq_along(efficacy)) {
+    ef <- efficacy[i]
+    pwr_gamma_glm <- run_sim_glm(nsim, mean0, shape, ef, alpha, power, q)
+    pwr_t_glm <- run_sim_t.test(nsim, mean0, shape, ef, alpha, power, q, analyse_glm)
+    pwr_t_t <- run_sim_t.test(nsim, mean0, shape, ef, alpha, power, q, analyse_t.test)
+    
+    results[i, 1] <- pwr_gamma_glm
+    results[i, 2] <- pwr_t_glm
+    results[i, 3] <- pwr_t_t
+    
+    cat("Run", paste0(i, "/20"), "completed\n")
+  }  
+  
+  data <- cbind(efficacy, results)
+  settings <- c("efficacy", "pwr_gamma_glm", "pwr_t_glm", "pwr_t_t")
+  colnames(data) <- settings
+  
+  data
+}

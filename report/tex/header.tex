@@ -1,0 +1,81 @@
+% \usepackage[ngerman]{babel}
+\usepackage{palatino}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{placeins}
+% \setitemize{itemsep=20pt}
+
+\usepackage[onehalfspacing]{setspace}
+\usepackage{microtype}
+\usepackage{tikz}
+\usepackage{bbm}
+\usepackage{chngcntr}
+\usepackage{environ}
+\usepackage{eurosym}
+\usepackage[newfloat]{minted}
+\usemintedstyle{tango}
+\SetupFloatingEnvironment{listing}{name=Codeblock, listname=Liste von Codeblöcken}
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+\setminted{bgcolor=bg, framesep=3mm, fontsize=\footnotesize, breaklines}
+
+\usepackage{pdfpages}
+\makeatletter
+\newsavebox{\measure@tikzpicture}
+\NewEnviron{scaletikzpicturetowidth}[1]{%
+  \def\tikz@width{#1}%
+  \def\tikzscale{1}\begin{lrbox}{\measure@tikzpicture}%
+  \BODY
+  \end{lrbox}%
+  \pgfmathparse{#1/\wd\measure@tikzpicture}%
+  \edef\tikzscale{\pgfmathresult}%
+  \BODY
+}
+\makeatother
+
+\usepackage{tabularx}
+% \usepackage{titling}
+%   \pretitle{\vspace{5cm}}
+%   \posttitle{\par\end{center}}
+
+% captions for figures, tables, and listings
+\usepackage[
+    labelfont=bf,
+    % labelsep=newline,
+    format=plain,
+    justification=justified,
+    labelsep=quad,
+    textformat=period,
+    font=footnotesize,
+    % indention=0pt
+    ]{caption}
+\captionsetup{singlelinecheck=false}
+\captionsetup[listing]{skip=0pt}
+
+% Links
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    filecolor=magenta,
+    urlcolor=blue,
+}
+
+
+\newcommand{\total}{\bm{X}}
+\newcommand{\dm}[1]{$dm_#1$}
+\newcommand{\hl}[1]{\colorbox{red!30}{#1}}
+
+\renewcommand{\tightlist}{} % to prevent pandoc from compressing lists
+
+% \addto\extrasenglish{%
+%   \def\chapterautorefname{Chapter}%
+%   \def\sectionautorefname{Section}%
+%   \def\subsectionautorefname{Subsection}%
+%   \def\subsubsectionautorefname{Subsubsection}%
+%   \def\paragraphautorefname{Paragraph}%
+%   \def\subparagraphautorefname{Subparagraph}%
+% }
+
+\usepackage{csquotes}
